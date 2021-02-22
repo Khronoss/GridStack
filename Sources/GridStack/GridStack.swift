@@ -9,20 +9,38 @@ import SwiftUI
 
 @available(iOS 13.0, OSX 10.15, tvOS 13.0, watchOS 6.0, *)
 public struct GridStack<Content>: View where Content: View {
+    public enum ViewWidth {
+        case absolute(CGFloat)
+        case automatic
+
+        var isAutomatic: Bool {
+            guard case .automatic = self else { return false }
+            return true
+        }
+
+        var absoluteWidth: CGFloat? {
+            guard case .absolute(let width) = self else { return nil }
+            return width
+        }
+    }
+
+    private let viewWidth: ViewWidth
     private let minCellWidth: CGFloat
     private let spacing: CGFloat
     private let numItems: Int
     private let alignment: HorizontalAlignment
     private let content: (Int, CGFloat) -> Content
     private let gridCalculator = GridCalculator()
-    
+
     public init(
+        width: ViewWidth,
         minCellWidth: CGFloat,
         spacing: CGFloat,
         numItems: Int,
         alignment: HorizontalAlignment = .leading,
         @ViewBuilder content: @escaping (Int, CGFloat) -> Content
     ) {
+        self.viewWidth = width
         self.minCellWidth = minCellWidth
         self.spacing = spacing
         self.numItems = numItems
@@ -35,20 +53,28 @@ public struct GridStack<Content>: View where Content: View {
     }
     
     public var body: some View {
-        GeometryReader { geometry in
-            InnerGrid(
-                width: geometry.size.width,
-                spacing: self.spacing,
-                items: self.items,
-                alignment: self.alignment,
-                content: self.content,
-                gridDefinition: self.gridCalculator.calculate(
-                    availableWidth: geometry.size.width,
-                    minimumCellWidth: self.minCellWidth,
-                    cellSpacing: self.spacing
-                )
-            )
+        if viewWidth.isAutomatic {
+            GeometryReader { geometry in
+                self.innerGrid(width: geometry.size.width)
+            }
+        } else {
+            self.innerGrid(width: viewWidth.absoluteWidth!)
         }
+    }
+
+    private func innerGrid(width: CGFloat) -> some View {
+        InnerGrid(
+            width: width,
+            spacing: self.spacing,
+            items: self.items,
+            alignment: self.alignment,
+            content: self.content,
+            gridDefinition: self.gridCalculator.calculate(
+                availableWidth: width,
+                minimumCellWidth: self.minCellWidth,
+                cellSpacing: self.spacing
+            )
+        )
     }
 }
 
