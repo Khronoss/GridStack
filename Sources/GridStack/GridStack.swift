@@ -25,6 +25,7 @@ public struct GridStack<Content>: View where Content: View {
     }
 
     private let viewWidth: ViewWidth
+    private let isScrollable: Bool
     private let minCellWidth: CGFloat
     private let spacing: CGFloat
     private let numItems: Int
@@ -34,6 +35,7 @@ public struct GridStack<Content>: View where Content: View {
 
     public init(
         width: ViewWidth,
+        isScrollable: Bool,
         minCellWidth: CGFloat,
         spacing: CGFloat,
         numItems: Int,
@@ -41,6 +43,7 @@ public struct GridStack<Content>: View where Content: View {
         @ViewBuilder content: @escaping (Int, CGFloat) -> Content
     ) {
         self.viewWidth = width
+        self.isScrollable = isScrollable
         self.minCellWidth = minCellWidth
         self.spacing = spacing
         self.numItems = numItems
@@ -65,6 +68,7 @@ public struct GridStack<Content>: View where Content: View {
     private func innerGrid(width: CGFloat) -> some View {
         InnerGrid(
             width: width,
+            isScrollable: isScrollable,
             spacing: self.spacing,
             items: self.items,
             alignment: self.alignment,
@@ -82,6 +86,7 @@ public struct GridStack<Content>: View where Content: View {
 private struct InnerGrid<Content>: View where Content: View {
     
     private let width: CGFloat
+    private let isScrollable: Bool
     private let spacing: CGFloat
     private let rows: [[Int]]
     private let alignment: HorizontalAlignment
@@ -90,6 +95,7 @@ private struct InnerGrid<Content>: View where Content: View {
     
     init(
         width: CGFloat,
+        isScrollable: Bool,
         spacing: CGFloat,
         items: [Int],
         alignment: HorizontalAlignment = .leading,
@@ -97,6 +103,7 @@ private struct InnerGrid<Content>: View where Content: View {
         gridDefinition: GridCalculator.GridDefinition
     ) {
         self.width = width
+        self.isScrollable = isScrollable
         self.spacing = spacing
         self.alignment = alignment
         self.content = content
@@ -105,20 +112,28 @@ private struct InnerGrid<Content>: View where Content: View {
     }
     
     var body : some View {
-        ScrollView(.vertical) {
-            VStack(alignment: alignment, spacing: spacing) {
-                ForEach(rows, id: \.self) { row in
-                    HStack(spacing: self.spacing) {
-                        ForEach(row, id: \.self) { item in
-                            // Pass the index and the cell width to the content
-                            self.content(item, self.columnWidth)
-                                .frame(width: self.columnWidth)
-                        }
-                    }.padding(.horizontal, self.spacing)
-                }
+        if isScrollable {
+            ScrollView(.vertical) {
+                gridView
             }
-            .padding(.top, spacing)
-            .frame(width: width)
+        } else {
+            gridView
         }
+    }
+
+    private var gridView: some View {
+        VStack(alignment: alignment, spacing: spacing) {
+            ForEach(rows, id: \.self) { row in
+                HStack(spacing: self.spacing) {
+                    ForEach(row, id: \.self) { item in
+                        // Pass the index and the cell width to the content
+                        self.content(item, self.columnWidth)
+                            .frame(width: self.columnWidth)
+                    }
+                }.padding(.horizontal, self.spacing)
+            }
+        }
+        .padding(.top, spacing)
+        .frame(width: width)
     }
 }

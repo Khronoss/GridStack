@@ -3,7 +3,7 @@ import SwiftUI
 
 struct ContentView : View {
     var body: some View {
-        GridStack(width: .automatic, minCellWidth: 300, spacing: 2, numItems: 15) { index, cellWidth in
+        GridStack(width: .automatic, isScrollable: false, minCellWidth: 300, spacing: 2, numItems: 15) { index, cellWidth in
             Text("\(index)")
                 .foregroundColor(.white)
                 .frame(width: cellWidth, height: cellWidth * 0.66)
